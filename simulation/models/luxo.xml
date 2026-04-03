@@ -1,0 +1,109 @@
+<mujoco model="luxo_lamp">
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <default>
+    <joint damping="0.5" armature="0.01"/>
+    <geom condim="3" friction="1.0 0.005 0.001" rgba="0.6 0.6 0.6 1"/>
+    <motor ctrlrange="-10 10" ctrllimited="true"/>
+  </default>
+
+  <asset>
+    <texture type="2d" name="grid" builtin="checker" width="512" height="512"
+             rgb1="0.2 0.3 0.4" rgb2="0.3 0.4 0.5"/>
+    <material name="grid" texture="grid" texrepeat="8 8" reflectance="0.2"/>
+    <material name="base_mat" rgba="0.3 0.3 0.3 1"/>
+    <material name="arm_mat" rgba="0.7 0.7 0.7 1"/>
+    <material name="head_mat" rgba="0.9 0.85 0.7 1"/>
+    <material name="link_mat" rgba="0.5 0.5 0.5 1"/>
+  </asset>
+
+  <worldbody>
+    <!-- Ground plane -->
+    <geom type="plane" size="1 1 0.01" material="grid"/>
+    <light pos="0 -0.5 1.5" dir="0 0.5 -1" diffuse="0.8 0.8 0.8"/>
+    <light pos="0.5 0.5 1.5" dir="-0.5 -0.5 -1" diffuse="0.5 0.5 0.5"/>
+
+    <!-- === LAMP BASE === -->
+    <body name="base" pos="0 0 0.025">
+      <geom name="base_plate" type="cylinder" size="0.10 0.025" mass="1.0" material="base_mat"/>
+      <joint name="base_yaw" type="hinge" axis="0 0 1" range="-3.14 3.14"/>
+
+      <!-- === LOWER ARM (primary) === -->
+      <body name="lower_arm" pos="0 0 0.025">
+        <joint name="lower_arm_pitch" type="hinge" axis="0 1 0" range="-0.5 2.0"/>
+        <geom name="lower_arm_geom" type="capsule" fromto="0 0 0 0 0 0.15" size="0.012"
+              mass="0.1" material="arm_mat"/>
+
+        <!-- === UPPER ARM (primary) === -->
+        <body name="upper_arm" pos="0 0 0.15">
+          <joint name="upper_arm_pitch" type="hinge" axis="0 1 0" range="-2.5 0.5"/>
+          <geom name="upper_arm_geom" type="capsule" fromto="0 0 0 0 0 0.15" size="0.012"
+                mass="0.1" material="arm_mat"/>
+
+          <!-- === HEAD === -->
+          <body name="head" pos="0 0 0.15">
+            <joint name="head_tilt" type="hinge" axis="0 1 0" range="-1.0 1.0"/>
+            <geom name="head_shade" type="capsule" fromto="0 0 0 0.06 0 -0.02" size="0.035"
+                  mass="0.15" material="head_mat"/>
+            <!-- Small bulb inside the shade -->
+            <geom name="bulb" type="sphere" pos="0.04 0 -0.01" size="0.015"
+                  mass="0.01" rgba="1 1 0.8 0.8"/>
+            <!-- Rear link attachment point for parallelogram -->
+            <site name="head_rear_link" pos="-0.015 0 0.01" size="0.005"/>
+          </body>
+
+          <!-- Rear link attachment at top of upper arm -->
+          <site name="upper_rear_top" pos="-0.025 0 0.15" size="0.005"/>
+        </body>
+
+        <!-- === REAR LOWER LINK (parallelogram) === -->
+        <body name="rear_lower_link" pos="-0.025 0 0">
+          <joint name="rear_lower_pitch" type="hinge" axis="0 1 0" range="-2.5 2.5"/>
+          <geom name="rear_lower_geom" type="capsule" fromto="0 0 0 0 0 0.15" size="0.008"
+                mass="0.03" material="link_mat"/>
+
+          <!-- === REAR UPPER LINK (parallelogram) === -->
+          <body name="rear_upper_link" pos="0 0 0.15">
+            <joint name="rear_upper_pitch" type="hinge" axis="0 1 0" range="-2.5 2.5"/>
+            <geom name="rear_upper_geom" type="capsule" fromto="0 0 0 0 0 0.15" size="0.008"
+                  mass="0.03" material="link_mat"/>
+            <!-- Rear link tip attachment -->
+            <site name="rear_link_tip" pos="0 0 0.15" size="0.005"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Parallelogram equality constraints:
+       These enforce that the rear linkage stays parallel to the main arms,
+       keeping the head level as the arm moves. -->
+  <equality>
+    <!-- Rear lower link mirrors lower arm angle -->
+    <joint joint1="rear_lower_pitch" joint2="lower_arm_pitch" polycoef="0 1 0 0 0"/>
+    <!-- Rear upper link mirrors upper arm angle -->
+    <joint joint1="rear_upper_pitch" joint2="upper_arm_pitch" polycoef="0 1 0 0 0"/>
+  </equality>
+
+  <!-- Actuators for the main joints -->
+  <actuator>
+    <motor name="base_yaw_motor" joint="base_yaw" gear="5"/>
+    <motor name="lower_arm_motor" joint="lower_arm_pitch" gear="8"/>
+    <motor name="upper_arm_motor" joint="upper_arm_pitch" gear="6"/>
+    <motor name="head_tilt_motor" joint="head_tilt" gear="3"/>
+  </actuator>
+
+  <!-- Sensors for feedback -->
+  <sensor>
+    <jointpos name="base_yaw_pos" joint="base_yaw"/>
+    <jointpos name="lower_arm_pos" joint="lower_arm_pitch"/>
+    <jointpos name="upper_arm_pos" joint="upper_arm_pitch"/>
+    <jointpos name="head_tilt_pos" joint="head_tilt"/>
+    <jointvel name="base_yaw_vel" joint="base_yaw"/>
+    <jointvel name="lower_arm_vel" joint="lower_arm_pitch"/>
+    <jointvel name="upper_arm_vel" joint="upper_arm_pitch"/>
+    <jointvel name="head_tilt_vel" joint="head_tilt"/>
+  </sensor>
+</mujoco>
