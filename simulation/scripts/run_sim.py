@@ -1,12 +1,16 @@
 """Basic simulation script for the Luxo lamp MuJoCo model.
 
-Loads the MJCF model and launches the passive viewer so you can
+Loads the MJCF model and launches the MuJoCo viewer so you can
 observe the lamp falling under gravity (no controller active).
 This validates that the model loads correctly and the linkage
 geometry behaves as expected.
+
+On macOS, run with: mjpython simulation/scripts/run_sim.py
 """
 
 import os
+import sys
+import platform
 import mujoco
 import mujoco.viewer
 
@@ -27,10 +31,10 @@ def main():
     print(f"  Actuators: {model.nu}")
     print(f"  Timestep: {model.opt.timestep}s")
     print()
-    print("Launching passive viewer... Close the window to exit.")
+    print("Launching viewer... Close the window to exit.")
 
-    # Launch the passive viewer - it steps the simulation automatically
-    mujoco.viewer.launch_passive(model, data)
+    # launch_passive requires mjpython on macOS; launch works everywhere
+    mujoco.viewer.launch(model, data)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mujoco-viewer",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["/tmp/mujoco_wasm/serve.sh"],
+      "port": 8080
+    }
+  ]
+}
